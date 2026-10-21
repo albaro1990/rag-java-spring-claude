@@ -1,0 +1,44 @@
+PROCESO DE BLOQUEO DE UNA TARJETA POR PÉRDIDA O ROBO
+
+Cuando un cliente detecta que su tarjeta de crédito fue extraviada o robada,
+debe solicitar el bloqueo lo antes posible para reducir el riesgo de operaciones
+no autorizadas.
+
+El cliente puede solicitar el bloqueo utilizando los canales habilitados por la
+institución financiera. Entre los canales disponibles pueden encontrarse la
+aplicación móvil, banca en línea, atención telefónica o atención presencial,
+dependiendo de los servicios disponibles.
+
+Para solicitar el bloqueo mediante la aplicación móvil, el cliente debe iniciar
+sesión, ingresar a la sección de tarjetas, seleccionar la tarjeta afectada y
+utilizar la opción de bloqueo correspondiente.
+
+Antes de confirmar el bloqueo, el sistema puede solicitar una validación de
+seguridad para comprobar la identidad del cliente.
+
+Una vez confirmada la solicitud, el sistema registra el bloqueo de la tarjeta.
+El estado de la tarjeta debe actualizarse para impedir nuevas operaciones con
+la tarjeta bloqueada.
+
+El cliente debe revisar las operaciones recientes de la tarjeta para identificar
+posibles transacciones que no reconozca.
+
+Si el cliente identifica una operación no reconocida, debe reportarla utilizando
+el procedimiento establecido por la institución financiera.
+
+El bloqueo de una tarjeta no necesariamente implica la cancelación de la
+cuenta o del producto financiero. El bloqueo tiene como objetivo impedir el uso
+de la tarjeta mientras se determina la acción posterior.
+
+Después del bloqueo, el cliente puede solicitar una tarjeta de reemplazo cuando
+el producto y las políticas de la institución lo permitan.
+
+La solicitud de reemplazo puede requerir una nueva emisión de tarjeta y puede
+estar sujeta a las condiciones establecidas para el producto.
+
+El cliente debe mantener actualizados sus datos de contacto para recibir
+notificaciones relacionadas con el bloqueo, investigación o reemplazo de la
+tarjeta.
+
+En caso de sospecha de fraude, la institución puede solicitar información
+adicional para investigar las operaciones reportadas por el cliente.

@@ -1,0 +1,5 @@
+PREGUNTA:
+{question}
+
+FRAGMENTOS:
+{fragments}

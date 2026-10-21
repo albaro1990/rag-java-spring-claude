@@ -1,0 +1,11 @@
+PREGUNTA:
+{question}
+
+CONTEXTO:
+{context}
+
+RESPUESTA ESPERADA:
+{expectedAnswer}
+
+RESPUESTA OBTENIDA:
+{answer}

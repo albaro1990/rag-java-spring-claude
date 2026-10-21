@@ -1,0 +1,493 @@
+[
+  {
+    "id": "Q01",
+    "split": "ajuste",
+    "category": "compuesta",
+    "question": "Si pierde su tarjeta y detecta una operación que no reconoce, ¿qué debe hacer?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "debe solicitar el bloqueo lo antes posible"
+      },
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "El cliente debe revisar las operaciones recientes"
+      },
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "Si el cliente identifica una operación no reconocida, debe reportarla"
+      }
+    ],
+    "expectedAnswer": "Solicitar el bloqueo de la tarjeta lo antes posible, revisar las operaciones recientes y reportar la operación no reconocida mediante el procedimiento de la institución.",
+    "incorrectAnswer": "Primero reportar la operación y luego bloquear la tarjeta. (Invierte el orden: el documento pide bloquear lo antes posible.)"
+  },
+  {
+    "id": "Q02",
+    "split": "ajuste",
+    "category": "sin_respuesta",
+    "question": "¿Cuál es la tasa de interés anual de la tarjeta de crédito?",
+    "shouldAnswer": false,
+    "expectedEvidence": [],
+    "expectedAnswer": "No se encontró información relevante para responder la pregunta.",
+    "incorrectAnswer": "La tasa depende del producto y de las políticas de la institución. (Suena razonable, pero ningún documento habla de tasas.)"
+  },
+  {
+    "id": "Q03",
+    "split": "ajuste",
+    "category": "directa",
+    "question": "¿Qué factores puede considerar la evaluación de crédito al solicitar una tarjeta?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_obtener_tarjeta.txt",
+        "text": "como historial crediticio"
+      },
+      {
+        "source": "proceso_obtener_tarjeta.txt",
+        "text": "capacidad de pago, nivel de ingresos"
+      }
+    ],
+    "expectedAnswer": "Historial crediticio, capacidad de pago, nivel de ingresos e información proporcionada por el cliente.",
+    "incorrectAnswer": "Historial crediticio, edad, antigüedad laboral y score mínimo de 650. (Inventa factores y un número que no están en el documento.)"
+  },
+  {
+    "id": "Q04",
+    "split": "ajuste",
+    "category": "directa",
+    "question": "¿Por qué canales puedo solicitar el bloqueo de mi tarjeta?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "aplicación móvil, banca en línea, atención telefónica o atención presencial"
+      }
+    ],
+    "expectedAnswer": "Aplicación móvil, banca en línea, atención telefónica o atención presencial, según los servicios disponibles.",
+    "incorrectAnswer": "Por la aplicación móvil, por WhatsApp o enviando un correo. (WhatsApp y correo no aparecen en el documento.)"
+  },
+  {
+    "id": "Q05",
+    "split": "ajuste",
+    "category": "directa",
+    "question": "¿Qué daños de la tarjeta puedo reportar para pedir un reemplazo?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_cambio_tarjeta.txt",
+        "text": "banda magnética deteriorada"
+      },
+      {
+        "source": "proceso_cambio_tarjeta.txt",
+        "text": "tarjeta doblada"
+      }
+    ],
+    "expectedAnswer": "Banda magnética deteriorada, chip dañado, tarjeta doblada o deterioro que impida realizar operaciones normalmente.",
+    "incorrectAnswer": "Solo si el chip está dañado; otros daños no aplican. (Omite opciones y agrega una restricción inventada.)"
+  },
+  {
+    "id": "Q06",
+    "split": "ajuste",
+    "category": "parafrasis",
+    "question": "Si bloqueo mi tarjeta, ¿se me cierra la cuenta?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "El bloqueo de una tarjeta no necesariamente implica la cancelación"
+      },
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "impedir el uso"
+      }
+    ],
+    "expectedAnswer": "No necesariamente. El bloqueo busca impedir el uso de la tarjeta mientras se determina la acción posterior; no implica por sí solo la cancelación de la cuenta.",
+    "incorrectAnswer": "Sí, al bloquear la tarjeta la cuenta queda cancelada. (Contradice el documento.)"
+  },
+  {
+    "id": "Q07",
+    "split": "ajuste",
+    "category": "parafrasis",
+    "question": "Me llegó la tarjeta nueva, ¿qué pasa con mis suscripciones que se cobran solas cada mes?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_cambio_tarjeta.txt",
+        "text": "Los pagos recurrentes asociados a la tarjeta pueden requerir"
+      },
+      {
+        "source": "proceso_cambio_tarjeta.txt",
+        "text": "el cliente debe actualizar la información"
+      }
+    ],
+    "expectedAnswer": "Después de activar la nueva tarjeta, debe actualizar la información de pago en los servicios o comercios donde usaba la anterior; los pagos recurrentes pueden requerir que se actualicen los datos.",
+    "incorrectAnswer": "No tiene que hacer nada, los cargos se transfieren automáticamente a la nueva tarjeta. (Afirma algo que el documento no dice.)"
+  },
+  {
+    "id": "Q08",
+    "split": "ajuste",
+    "category": "entre_documentos",
+    "question": "Me robaron la tarjeta, ¿cómo consigo una nueva?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_cambio_tarjeta.txt",
+        "text": "En caso de pérdida o robo, el cliente debe realizar primero el bloqueo"
+      },
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "Después del bloqueo, el cliente puede solicitar una tarjeta de reemplazo"
+      }
+    ],
+    "expectedAnswer": "Primero debe bloquear la tarjeta y después puede solicitar una tarjeta de reemplazo, cuando el producto y las políticas de la institución lo permitan.",
+    "incorrectAnswer": "Solicite directamente una tarjeta de reemplazo en la aplicación. (Omite el bloqueo previo que exige el documento.)"
+  },
+  {
+    "id": "Q09",
+    "split": "ajuste",
+    "category": "sin_respuesta",
+    "question": "¿Cómo aumento el límite de crédito de mi tarjeta?",
+    "shouldAnswer": false,
+    "expectedEvidence": [],
+    "expectedAnswer": "No se encontró información relevante para responder la pregunta.",
+    "incorrectAnswer": "Solicítelo en la aplicación móvil; la institución evaluará su capacidad de pago. (Mezcla frases reales de otros procesos para inventar uno que no existe.)"
+  },
+  {
+    "id": "Q10",
+    "split": "ajuste",
+    "category": "sin_respuesta",
+    "question": "¿Puedo solicitar una tarjeta adicional para un familiar?",
+    "shouldAnswer": false,
+    "expectedEvidence": [],
+    "expectedAnswer": "No se encontró información relevante para responder la pregunta.",
+    "incorrectAnswer": "Sí, el titular puede solicitarla presentando la documentación requerida. (Se apoya en el proceso de obtención, que no habla de tarjetas adicionales.)"
+  },
+  {
+    "id": "Q11",
+    "split": "ajuste",
+    "category": "directa",
+    "question": "¿Qué debe proporcionar el cliente al solicitar una tarjeta de crédito?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_obtener_tarjeta.txt",
+        "text": "El cliente debe proporcionar información personal"
+      },
+      {
+        "source": "proceso_obtener_tarjeta.txt",
+        "text": "información de contacto y documentación requerida"
+      }
+    ],
+    "expectedAnswer": "Información personal, información de contacto y la documentación requerida por la institución financiera.",
+    "incorrectAnswer": "Cédula, comprobante de ingresos y estados de cuenta de los últimos 3 meses. (Inventa documentos concretos que no están en el documento.)"
+  },
+  {
+    "id": "Q12",
+    "split": "ajuste",
+    "category": "directa",
+    "question": "¿Cómo bloqueo mi tarjeta desde la aplicación móvil?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "iniciar sesión, ingresar a la sección de tarjetas, seleccionar la tarjeta afectada"
+      },
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "utilizar la opción de bloqueo correspondiente"
+      }
+    ],
+    "expectedAnswer": "Iniciar sesión, ingresar a la sección de tarjetas, seleccionar la tarjeta afectada y usar la opción de bloqueo; el sistema puede pedir una validación de seguridad antes de confirmar.",
+    "incorrectAnswer": "Ve a Configuración > Seguridad > Bloquear tarjeta e ingresa tu PIN. (Inventa menús y pasos que el documento no menciona.)"
+  },
+  {
+    "id": "Q13",
+    "split": "ajuste",
+    "category": "directa",
+    "question": "¿Dónde me pueden entregar la tarjeta de crédito?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_obtener_tarjeta.txt",
+        "text": "en una agencia o mediante un servicio de entrega a domicilio"
+      }
+    ],
+    "expectedAnswer": "Dependiendo del producto contratado, en una agencia o mediante un servicio de entrega a domicilio.",
+    "incorrectAnswer": "Solo en la agencia donde abriste la cuenta. (Omite la entrega a domicilio y agrega una restricción inventada.)"
+  },
+  {
+    "id": "Q14",
+    "split": "ajuste",
+    "category": "parafrasis",
+    "question": "Mi tarjeta está por vencer, ¿qué va a pasar?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_cambio_tarjeta.txt",
+        "text": "la institución puede iniciar un proceso de renovación"
+      },
+      {
+        "source": "proceso_cambio_tarjeta.txt",
+        "text": "una nueva fecha de expiración"
+      }
+    ],
+    "expectedAnswer": "La institución puede iniciar un proceso de renovación, que puede generar una nueva tarjeta con nueva fecha de expiración y nuevos elementos de seguridad; al recibirla debe verificarla y activarla.",
+    "incorrectAnswer": "La tarjeta se renueva automáticamente 30 días antes y llega sin costo. (Inventa un plazo y una condición de costo.)"
+  },
+  {
+    "id": "Q15",
+    "split": "ajuste",
+    "category": "parafrasis",
+    "question": "¿Qué pasa si no me aprueban la tarjeta?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_obtener_tarjeta.txt",
+        "text": "la solicitud puede ser rechazada o requerir información adicional"
+      }
+    ],
+    "expectedAnswer": "Si no cumple los criterios, la solicitud puede ser rechazada o requerir información adicional antes de tomar una decisión.",
+    "incorrectAnswer": "Puede volver a solicitarla después de 6 meses. (Inventa un plazo de espera.)"
+  },
+  {
+    "id": "Q16",
+    "split": "ajuste",
+    "category": "compuesta",
+    "question": "Ya bloqueé mi tarjeta, ¿qué más debo hacer?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "El cliente debe revisar las operaciones recientes"
+      },
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "Si el cliente identifica una operación no reconocida, debe reportarla"
+      },
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "Después del bloqueo, el cliente puede solicitar una tarjeta de reemplazo"
+      }
+    ],
+    "expectedAnswer": "Revisar las operaciones recientes, reportar cualquier operación no reconocida y, si lo desea y las políticas lo permiten, solicitar una tarjeta de reemplazo.",
+    "incorrectAnswer": "Cancelar la cuenta y abrir una nueva. (Contradice el documento: el bloqueo no implica cancelar la cuenta.)"
+  },
+  {
+    "id": "Q17",
+    "split": "ajuste",
+    "category": "entre_documentos",
+    "question": "¿Qué debo hacer cuando recibo una tarjeta, ya sea nueva o de reemplazo?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_obtener_tarjeta.txt",
+        "text": "verificar que sus datos sean correctos"
+      },
+      {
+        "source": "proceso_cambio_tarjeta.txt",
+        "text": "El cliente debe activar la nueva tarjeta"
+      }
+    ],
+    "expectedAnswer": "Verificar que sus datos sean correctos y activarla siguiendo el procedimiento establecido; si es de reemplazo, actualizar los datos de pago donde usaba la anterior.",
+    "incorrectAnswer": "Usarla de inmediato, ya viene activada. (Contradice el documento: requiere activación.)"
+  },
+  {
+    "id": "Q18",
+    "split": "ajuste",
+    "category": "sin_respuesta",
+    "question": "¿Cuál es la comisión por retiro de efectivo con la tarjeta?",
+    "shouldAnswer": false,
+    "expectedEvidence": [],
+    "expectedAnswer": "No se encontró información relevante para responder la pregunta.",
+    "incorrectAnswer": "La comisión depende del producto contratado. (Suena razonable, pero ningún documento habla de comisiones por retiro.)"
+  },
+  {
+    "id": "Q19",
+    "split": "ajuste",
+    "category": "parcial",
+    "question": "¿Cuánto tiempo tarda en llegar una tarjeta de reemplazo?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_cambio_tarjeta.txt",
+        "text": "tiempos asociados al reemplazo pueden depender del motivo de la solicitud"
+      }
+    ],
+    "expectedAnswer": "El contexto no indica un plazo concreto: los tiempos del reemplazo dependen del motivo de la solicitud y de las políticas vigentes de la institución.",
+    "incorrectAnswer": "Entre 5 y 10 días hábiles. (Inventa un plazo que no está en el documento.)"
+  },
+  {
+    "id": "Q20",
+    "split": "ajuste",
+    "category": "sin_respuesta",
+    "question": "¿Cómo cambio la clave (PIN) de mi tarjeta?",
+    "shouldAnswer": false,
+    "expectedEvidence": [],
+    "expectedAnswer": "No se encontró información relevante para responder la pregunta.",
+    "incorrectAnswer": "Desde la aplicación móvil, en la sección de tarjetas. (Mezcla el proceso de bloqueo para inventar uno que no existe; el documento solo dice no compartir claves.)"
+  },
+  {
+    "id": "Q21",
+    "split": "confirmacion",
+    "category": "directa",
+    "question": "¿Qué puede pedir el sistema antes de confirmar el bloqueo de la tarjeta?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "el sistema puede solicitar una validación de seguridad"
+      }
+    ],
+    "expectedAnswer": "Una validación de seguridad para comprobar la identidad del cliente.",
+    "incorrectAnswer": "Un código enviado por SMS y una foto del documento de identidad. (Inventa el tipo de validación.)"
+  },
+  {
+    "id": "Q22",
+    "split": "confirmacion",
+    "category": "directa",
+    "question": "Si me reemplazan la tarjeta, ¿cambian las condiciones de mi contrato?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_cambio_tarjeta.txt",
+        "text": "no necesariamente modifica las condiciones contractuales"
+      },
+      {
+        "source": "proceso_cambio_tarjeta.txt",
+        "text": "El cliente debe revisar las condiciones vigentes"
+      }
+    ],
+    "expectedAnswer": "No necesariamente; el reemplazo no modifica por sí mismo las condiciones contractuales, pero el cliente debe revisar las condiciones vigentes al recibir la nueva tarjeta.",
+    "incorrectAnswer": "No, las condiciones nunca cambian. (Convierte \"no necesariamente\" en \"nunca\".)"
+  },
+  {
+    "id": "Q23",
+    "split": "confirmacion",
+    "category": "directa",
+    "question": "¿Qué se analiza durante la evaluación de crédito?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_obtener_tarjeta.txt",
+        "text": "se analiza la información financiera disponible del solicitante"
+      }
+    ],
+    "expectedAnswer": "La información financiera disponible del solicitante, para determinar si cumple las políticas internas de aprobación (por ejemplo historial crediticio, capacidad de pago e ingresos).",
+    "incorrectAnswer": "Solo el puntaje del buró de crédito. (Reduce a un único factor no mencionado.)"
+  },
+  {
+    "id": "Q24",
+    "split": "confirmacion",
+    "category": "parafrasis",
+    "question": "Perdí el celular y no puedo entrar a la app, ¿hay otra forma de bloquear la tarjeta?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "banca en línea, atención telefónica o atención presencial"
+      }
+    ],
+    "expectedAnswer": "Sí: también puede pedir el bloqueo por banca en línea, atención telefónica o atención presencial, según los servicios disponibles.",
+    "incorrectAnswer": "No, el bloqueo solo se hace desde la aplicación. (Contradice el documento.)"
+  },
+  {
+    "id": "Q25",
+    "split": "confirmacion",
+    "category": "parafrasis",
+    "question": "Se me dobló la tarjeta y ya no funciona en los comercios, ¿qué hago?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_cambio_tarjeta.txt",
+        "text": "tarjeta doblada"
+      },
+      {
+        "source": "proceso_cambio_tarjeta.txt",
+        "text": "el cliente puede solicitar un reemplazo"
+      }
+    ],
+    "expectedAnswer": "Puede reportar el daño y solicitar un reemplazo; la institución puede validar el estado de la tarjeta antes de generar una nueva emisión.",
+    "incorrectAnswer": "Debe bloquearla primero como si fuera robo. (El bloqueo previo se exige por pérdida o robo, no por daño.)"
+  },
+  {
+    "id": "Q26",
+    "split": "confirmacion",
+    "category": "compuesta",
+    "question": "¿Cuáles son las etapas para obtener una tarjeta de crédito?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_obtener_tarjeta.txt",
+        "text": "comienza con el registro de la solicitud"
+      },
+      {
+        "source": "proceso_obtener_tarjeta.txt",
+        "text": "se realiza una evaluación de crédito"
+      },
+      {
+        "source": "proceso_obtener_tarjeta.txt",
+        "text": "se genera la tarjeta de crédito"
+      },
+      {
+        "source": "proceso_obtener_tarjeta.txt",
+        "text": "seguir el procedimiento establecido para su activación"
+      }
+    ],
+    "expectedAnswer": "Registro y validación de la solicitud, evaluación de crédito, aprobación, generación de la tarjeta, entrega y activación.",
+    "incorrectAnswer": "Llenar el formulario y recibir la tarjeta al día siguiente. (Omite etapas e inventa un plazo.)"
+  },
+  {
+    "id": "Q27",
+    "split": "confirmacion",
+    "category": "entre_documentos",
+    "question": "Si pierdo la tarjeta, ¿pido directamente el reemplazo o primero la bloqueo?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_cambio_tarjeta.txt",
+        "text": "el cliente debe realizar primero el bloqueo"
+      },
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "Después del bloqueo, el cliente puede solicitar una tarjeta de reemplazo"
+      }
+    ],
+    "expectedAnswer": "Primero debe bloquearla; después puede solicitar el reemplazo cuando el producto y las políticas lo permitan.",
+    "incorrectAnswer": "Puede pedir el reemplazo directamente; el bloqueo es automático. (Contradice el documento.)"
+  },
+  {
+    "id": "Q28",
+    "split": "confirmacion",
+    "category": "parafrasis",
+    "question": "¿Por qué debo tener actualizados mi correo y mi teléfono?",
+    "shouldAnswer": true,
+    "expectedEvidence": [
+      {
+        "source": "proceso_bloqueo_tarjeta.txt",
+        "text": "mantener actualizados sus datos de contacto para recibir notificaciones"
+      }
+    ],
+    "expectedAnswer": "Para recibir notificaciones relacionadas con el bloqueo, la investigación o el reemplazo de la tarjeta.",
+    "incorrectAnswer": "Para recibir promociones y ofertas. (No está en el documento.)"
+  },
+  {
+    "id": "Q29",
+    "split": "confirmacion",
+    "category": "sin_respuesta",
+    "question": "¿Qué beneficios o puntos de recompensa tiene la tarjeta?",
+    "shouldAnswer": false,
+    "expectedEvidence": [],
+    "expectedAnswer": "No se encontró información relevante para responder la pregunta.",
+    "incorrectAnswer": "Acumula puntos por cada compra. (Ningún documento habla de beneficios.)"
+  },
+  {
+    "id": "Q30",
+    "split": "confirmacion",
+    "category": "sin_respuesta",
+    "question": "¿Cuál es el horario de la atención telefónica?",
+    "shouldAnswer": false,
+    "expectedEvidence": [],
+    "expectedAnswer": "No se encontró información relevante para responder la pregunta.",
+    "incorrectAnswer": "Las 24 horas. (Trampa: el documento menciona la atención telefónica, pero no su horario.)"
+  }
+]

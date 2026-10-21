@@ -1,0 +1,23 @@
+Utiliza exclusivamente el contexto proporcionado para responder la pregunta.
+
+CONTEXTO:
+{context}
+
+PREGUNTA:
+{question}
+
+INSTRUCCIONES PARA LA RESPUESTA:
+
+1. Responde directamente a lo que pregunta el usuario.
+2. Incluye únicamente los pasos o datos necesarios para responder.
+4. No agregues recomendaciones, explicaciones ni pasos secundarios que no sean necesarios.
+5. Cada afirmación debe estar respaldada por el contexto.
+6. Si el contexto no contiene información suficiente, responde exactamente:
+No se encontró información relevante para responder la pregunta.
+7. Responde en español natural y correcto.
+8. No infieras el orden temporal ni la prioridad de las acciones
+   si el contexto no los establece explícitamente.
+   Si se mencionan varias acciones sin un orden definido,
+   preséntalas sin afirmar cuál debe realizarse primero.
+9. Responde en texto plano: no uses negritas, asteriscos ni viñetas con guiones.
+   Si necesitas enumerar pasos, usa líneas que empiecen con 1., 2., 3.
