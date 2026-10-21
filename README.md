@@ -1,96 +1,124 @@
-# rag-demo
+# rag-java-spring-claude
 
-Laboratorio de RAG (Retrieval-Augmented Generation) en Java 21 + Spring Boot que responde preguntas sobre procesos de tarjetas bancarias usando únicamente los documentos cargados. Si la información no está en los documentos, el sistema se abstiene en lugar de inventar.
+A Retrieval-Augmented Generation (RAG) lab in Java 21 and Spring Boot. It answers questions about bank card procedures using only the loaded documents, and abstains instead of guessing when the answer is not there.
 
-Los resultados de evaluación, las decisiones tomadas y las lecciones aprendidas están en [EVALUACION.md](EVALUACION.md).
+Built step by step with a measure-first approach: a 30-question evaluation set, a held-out split, and an LLM judge drove every change. Retrieval went from 5/10 to 29/30 and generation reached 30/30 correct answer-or-abstain decisions with zero hallucinations. The full history, decisions and lessons are in [EVALUATION.md](EVALUATION.md).
 
-## Arquitectura
+> The source documents, prompts and evaluation questions are in Spanish, because the domain (bank customer support) is Spanish-speaking. Code and docs are in English.
+
+## Highlights
+
+- **Two-stage retrieval**: query rewriting (multi-query), vector search in pgvector with a loose threshold, then an LLM reranker that keeps the best fragments or answers `NINGUNO` (none).
+- **Grounded generation** with explicit abstention when the context does not contain the answer.
+- **Pluggable LLM** behind a `LlmClient` port: local Ollama (qwen2.5:3b) or Claude through the official Anthropic Java SDK, switched by one property.
+- **Evaluation suite**: retrieval recall, answer/abstain decision, format checks, latency, token usage and real cost per question, plus an LLM-as-judge scoring faithfulness, completeness and relevance.
+- **Production basics**: secrets in environment variables, prompts in files (cached), timeouts and retries, idempotent ingestion that also removes deleted documents, full cost attribution across all LLM calls, and SSE streaming on virtual threads.
+
+## Architecture
 
 ```
-                 INGESTA (POST /api/documents/ingest)
-documents/*.txt ─► DocumentLoader ─► DocumentChunker ─► Embeddings (bge-m3) ─► PostgreSQL + pgvector
+                 INGESTION (POST /api/documents/ingest)
+documents/*.txt ─► DocumentLoader ─► DocumentChunker ─► embeddings (bge-m3) ─► PostgreSQL + pgvector
 
-                 CONSULTA (POST /api/rag/ask, GET /api/rag/ask/stream)
-pregunta ─► QueryRewriter ─► búsqueda vectorial (pregunta original + reescrita)
-        ─► LlmReranker (filtra candidatos) ─► prompt con contexto ─► LLM ─► respuesta + fuentes + métricas
+                 QUERY (POST /api/rag/ask, GET /api/rag/ask/stream)
+question ─► QueryRewriter ─► vector search (original + rewritten question)
+         ─► LlmReranker (filters candidates) ─► grounded prompt ─► LLM ─► answer + sources + metrics
 ```
 
-| Etapa | Clase | Qué hace |
+| Stage | Class | What it does |
 |---|---|---|
-| Carga | `ingestion/DocumentLoader` | Lee los `.txt` y normaliza saltos de línea (`\r\n` → `\n`). |
-| Chunking | `ingestion/DocumentChunker` | Corta por oraciones en bloques de ~500 caracteres. Soporta overlap por oraciones (hoy en 0). |
-| Ingesta | `ingestion/DocumentIngestionService` | Calcula embeddings fuera de la transacción y reemplaza cada documento completo (idempotente: reingestar no duplica). |
-| Búsqueda | `service/DocumentChunkService` | Distancia coseno en pgvector con umbral y límite. |
-| Reescritura | `service/QueryRewriter` | Reformula la pregunta con vocabulario de los documentos; valida la salida (primera línea, máx. 300 caracteres). |
-| Reranking | `service/LlmReranker` | El LLM elige qué candidatos responden la pregunta, o `NINGUNO`. |
-| Orquestación | `service/RetrievalService`, `service/RagService` | Retrieval en dos etapas, armado del contexto, llamada al LLM y métricas de todas las llamadas. |
-| Streaming | `service/RagStreamingService` | Envía la respuesta por SSE en hilos virtuales; el controller solo delega. |
-| LLM | `llm/LlmClient` | Interfaz (puerto) con dos adaptadores: `OllamaLlmClient` y `ClaudeLlmClient`. |
-| Prompts | `prompt/PromptTemplateService` | Carga los prompts desde `resources/prompts` y los guarda en caché. |
+| Loading | `ingestion/DocumentLoader` | Reads the `.txt` files and normalizes line endings (`\r\n` → `\n`). |
+| Chunking | `ingestion/DocumentChunker` | Splits on sentence boundaries into ~500-character chunks. Supports sentence-based overlap (currently 0). |
+| Ingestion | `ingestion/DocumentIngestionService` | Computes embeddings outside the transaction, replaces each document as a whole (re-ingesting never duplicates) and deletes documents that are no longer in the folder. |
+| Search | `service/DocumentChunkService` | Cosine distance in pgvector with a threshold and a limit. |
+| Rewriting | `service/QueryRewriter` | Rephrases the question with the documents' vocabulary; validates the output (first line, max 300 characters). |
+| Reranking | `service/LlmReranker` | The LLM picks which candidates answer the question, or `NINGUNO`. |
+| Orchestration | `service/RetrievalService`, `service/RagService` | Two-stage retrieval, context building, the LLM call and metrics for every call. |
+| Streaming | `service/RagStreamingService` | Sends the answer over SSE on virtual threads; the controller only delegates. |
+| LLM | `llm/LlmClient` | Port with two adapters: `OllamaLlmClient` and `ClaudeLlmClient`. |
+| Prompts | `prompt/PromptTemplateService` | Loads prompts from `resources/prompts` and caches them. |
 
-## Requisitos
+## Requirements
 
-- Java 21 (el proyecto trae Maven Wrapper, no hace falta instalar Maven).
-- PostgreSQL con la extensión `pgvector` y una base llamada `rag_implmentation`.
-- [Ollama](https://ollama.com) corriendo en `http://localhost:11434` con los modelos:
+- Java 21 (the Maven Wrapper is included).
+- PostgreSQL with the `pgvector` extension (Docker Compose provided).
+- [Ollama](https://ollama.com) on `http://localhost:11434`:
   ```bash
-  ollama pull bge-m3        # embeddings (siempre necesario)
-  ollama pull qwen2.5:3b    # LLM local (solo si rag.llm.provider=ollama)
+  ollama pull bge-m3        # embeddings (always required)
+  ollama pull qwen2.5:3b    # local LLM (only when rag.llm.provider=ollama)
   ```
-- Para usar Claude: una API key de Anthropic con crédito.
+- To use Claude: an Anthropic API key with credit.
 
-## Configuración
+## Configuration
 
-Los secretos van en **variables de entorno**, nunca en el código, en `application.properties` ni en git:
+Secrets live in **environment variables**, never in code, `application.properties` or git:
 
-| Variable | Uso |
+| Variable | Used for |
 |---|---|
-| `DB_PASSWORD` | Contraseña de PostgreSQL. |
-| `ANTHROPIC_API_KEY` | API key de Anthropic (solo con `rag.llm.provider=claude`). |
+| `DB_PASSWORD` | PostgreSQL password (also used by Docker Compose). |
+| `ANTHROPIC_API_KEY` | Anthropic API key (only with `rag.llm.provider=claude`). |
 
-En Windows (PowerShell), una sola vez; luego reinicia IntelliJ o la terminal:
+On Windows (PowerShell), once, then restart the IDE or terminal:
 
 ```powershell
-setx DB_PASSWORD "tu_password"
-setx ANTHROPIC_API_KEY "tu_api_key"
+setx DB_PASSWORD "your_password"
+setx ANTHROPIC_API_KEY "your_api_key"
 ```
 
-Propiedades principales de `src/main/resources/application.properties`:
+Main properties in `src/main/resources/application.properties`:
 
-| Propiedad | Valor | Para qué |
+| Property | Value | Purpose |
 |---|---|---|
-| `rag.llm.provider` | `claude` | `claude` u `ollama`: qué LLM genera, reescribe y rerankea. |
-| `anthropic.model` / `anthropic.judge-model` | `claude-haiku-5-5` | Modelo generador y modelo juez. |
-| `anthropic.timeout` / `anthropic.max-retries` | `30s` / `3` | Robustez ante una API lenta o caída. |
-| `rag.chunk-size` / `rag.chunk-overlap` | `500` / `0` | Tamaño de chunk y overlap (ver EVALUACION.md). |
-| `rag.retrieval.threshold` / `rag.retrieval.limit` | `0.40` / `8` | Retrieval de una etapa (cuando el reranker está apagado). |
-| `rag.query-rewriting.enabled` | `true` | Activa la reescritura de la pregunta. |
-| `rag.rerank.enabled` | `true` | Activa el retrieval en dos etapas. |
-| `rag.rerank.candidate-threshold` / `candidates` / `top-n` | `0.45` / `15` / `5` | Etapa 1 amplia, etapa 2 se queda con máximo 5. |
-| `rag.streaming.timeout-ms` | `120000` (por defecto) | Tiempo máximo de una respuesta en streaming. |
-| `logging.level.com.albaro.rag.demo.service.*` | `INFO` / `DEBUG` | `DEBUG` muestra el contexto, la reescritura y la elección del reranker. |
+| `rag.llm.provider` | `claude` | `claude` or `ollama`: which LLM generates, rewrites and reranks. |
+| `anthropic.model` / `anthropic.judge-model` | `claude-haiku-5-5` | Generator model and judge model. |
+| `anthropic.timeout` / `anthropic.max-retries` | `30s` / `3` | Resilience against a slow or failing API. |
+| `rag.chunk-size` / `rag.chunk-overlap` | `500` / `0` | Chunk size and overlap (see EVALUATION.md). |
+| `rag.retrieval.threshold` / `rag.retrieval.limit` | `0.40` / `8` | Single-stage retrieval (when the reranker is off). |
+| `rag.query-rewriting.enabled` | `true` | Turns query rewriting on. |
+| `rag.rerank.enabled` | `true` | Turns two-stage retrieval on. |
+| `rag.rerank.candidate-threshold` / `candidates` / `top-n` | `0.45` / `15` / `5` | Wide first stage; the second stage keeps at most 5. |
+| `rag.streaming.timeout-ms` | `120000` (default) | Maximum time for a streamed answer. |
+| `logging.level.com.albaro.rag.demo.service.*` | `INFO` / `DEBUG` | `DEBUG` logs the context, the rewritten query and the reranker's choice. |
 
-Los prompts viven en `src/main/resources/prompts/` (guardar siempre con fin de línea **LF**: con CRLF el comportamiento del modelo cambió de forma medible):
+Prompts live in `src/main/resources/prompts/`. They must use **LF** line endings (enforced by `.gitattributes`): with CRLF the model's behaviour changed measurably.
 
-- `rag-system.txt`, `rag-user.txt`: generación de la respuesta (`{context}`, `{question}`).
-- `query-rewriter-system.txt`: reescritura de la pregunta.
-- `reranker-system.txt`, `reranker-user.txt`: selección de fragmentos (`{question}`, `{fragments}`).
+- `rag-system.txt`, `rag-user.txt`: answer generation (`{context}`, `{question}`).
+- `query-rewriter-system.txt`: query rewriting.
+- `reranker-system.txt`, `reranker-user.txt`: fragment selection (`{question}`, `{fragments}`).
 
-## Ejecutar
+## Running
+
+### 1. Database
+
+With Docker (creates the database and applies `db/schema.sql` on first start):
+
+```bash
+docker compose up -d
+```
+
+If you already run PostgreSQL locally on port 5432, stop it or change the published port. Without Docker, create the `rag_implmentation` database and apply the schema:
+
+```bash
+psql -U postgres -d rag_implmentation -f db/schema.sql
+```
+
+The app uses `ddl-auto=validate`: Hibernate checks the schema but never changes it.
+
+### 2. Application
 
 ```bash
 ./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
 ```
 
-### 1. Cargar los documentos
+### 3. Ingest the documents
 
 ```bash
 curl -X POST http://localhost:8080/api/documents/ingest
 ```
 
-Lee `src/main/resources/documents/`. Se puede repetir sin duplicar chunks.
+Reads `src/main/resources/documents/`. Safe to repeat: documents are replaced, not duplicated, and documents removed from the folder are deleted from the database. It refuses to run on an empty folder, so a wrong path cannot wipe the index.
 
-### 2. Preguntar
+### 4. Ask
 
 ```bash
 curl -X POST http://localhost:8080/api/rag/ask \
@@ -98,56 +126,56 @@ curl -X POST http://localhost:8080/api/rag/ask \
   -d '{"question": "¿Qué hago si pierdo mi tarjeta?"}'
 ```
 
-Respuesta: `answer`, `sources` (documento, chunk y distancia) y `metrics` (tiempos de retrieval y LLM, tokens de generación y de reescritura + rerank).
+The response has `answer`, `sources` (document, chunk and distance) and `metrics` (retrieval and LLM latency, generation tokens, and rewriting + reranking tokens).
 
-### 3. Preguntar en streaming (SSE)
+### 5. Ask with streaming (SSE)
 
 ```bash
 curl -N "http://localhost:8080/api/rag/ask/stream?question=¿Qué hago si pierdo mi tarjeta?"
 ```
 
-La respuesta llega en pedazos (`data: ...`) a medida que el LLM la escribe. En Postman: petición GET a la misma URL.
+The answer arrives in pieces (`data: ...`) as the LLM writes it. In Postman, send a GET to the same URL.
 
-### Otros endpoints
+`GET /api/documents/search?question=...` returns the raw vector search results, which helps when debugging retrieval.
 
-- `GET /api/documents/search?question=...`: muestra los chunks que devuelve la búsqueda vectorial, útil para depurar retrieval.
-- `POST /api/documents/chunks`, `POST /api/documents/chunk`, `GET /api/documents/ingestion-test`: endpoints de prueba del inicio del laboratorio. No deberían existir en producción (ver pendientes en EVALUACION.md).
+## Evaluation
 
-## Evaluación
+The dataset is in `src/test/resources/eval/eval-cases.json`: 30 questions with the literal evidence expected, split into `ajuste` (tuning, Q01–Q20) and `confirmacion` (held-out, Q21–Q30, only used to confirm an improvement is not overfitting).
 
-El dataset está en `src/test/resources/eval/eval-cases.json`: 30 preguntas con evidencia literal esperada, divididas en `ajuste` (Q01–Q20, para iterar) y `confirmacion` (Q21–Q30, solo para confirmar que una mejora no es sobreajuste).
-
-| Test | Qué mide | Costo |
+| Test | What it measures | Cost |
 |---|---|---|
-| `RetrievalEvaluationTest` | Si los chunks recuperados contienen la evidencia; en preguntas sin respuesta, que no recupere nada. | Gratis con Ollama; con Claude paga reescritura y rerank. |
-| `GenerationEvaluationTest` | Decisión correcta (responder o abstenerse), respuestas con markdown, latencia, tokens y costo real de la corrida. | ~US$ 0.02 por corrida de 30 con Haiku 5.5. |
-| `JudgeEvaluationTest` | LLM como juez: fidelidad, completitud y relevancia (1 a 5) de cada respuesta. | Algo más que el anterior (genera y juzga). |
-| `DocumentChunkerTest`, `RealDocumentChunkingTest` | Chunking y overlap por oraciones. | Gratis. |
+| `RetrievalEvaluationTest` | Whether retrieved chunks contain the evidence; for unanswerable questions, that nothing is retrieved. | Free with Ollama; with Claude it pays for rewriting and reranking. |
+| `GenerationEvaluationTest` | Correct answer/abstain decision, answers with markdown, latency, tokens and the real cost of the run. | ~US$0.02 per 30-question run with Haiku 5.5. |
+| `JudgeEvaluationTest` | LLM-as-judge: faithfulness, completeness and relevance (1 to 5) for each answer. | A bit more than the previous one (generates and judges). |
+| `DocumentChunkerTest`, `RealDocumentChunkingTest` | Chunking and sentence-based overlap. | Free. |
 
 ```bash
 ./mvnw test -Dtest=RetrievalEvaluationTest
-./mvnw test -Dtest=GenerationEvaluationTest -Deval.split=ajuste        # o confirmacion; sin -D corre las 30
+./mvnw test -Dtest=GenerationEvaluationTest -Deval.split=ajuste        # or confirmacion; omit to run all 30
 ./mvnw test -Dtest=JudgeEvaluationTest -Deval.split=ajuste
 ```
 
-Los tests de evaluación usan la base y el LLM reales: hay que tener la aplicación configurada y los documentos ingeridos. Antes de correr con Claude, revisa el crédito disponible.
+Evaluation tests use the real database and LLM: configure the app and ingest the documents first. Check your API credit before running them with Claude.
 
-## Estructura
+## Project layout
 
 ```
+db/schema.sql            database schema (pgvector)
+docker-compose.yml       PostgreSQL + pgvector
 src/main/java/com/albaro/rag/demo/
-  config/      Ollama, embeddings y propiedades de prompts
-  controller/  RagController, DocumentController (delgados: reciben y delegan)
+  config/      Ollama, embeddings and prompt properties
+  controller/  RagController, DocumentController (thin: receive and delegate)
   dto/         RagResponse, RagMetrics, RetrievalOutcome, RerankOutcome...
   entity/      DocumentChunk (vector(1024))
-  ingestion/   carga, chunking e ingesta
-  llm/         LlmClient + adaptadores Ollama y Claude
-  prompt/      carga y renderizado de prompts
-  repository/  consultas pgvector
-  service/     retrieval, reescritura, reranker, RAG y streaming
+  ingestion/   loading, chunking and ingestion
+  llm/         LlmClient + Ollama and Claude adapters
+  prompt/      prompt loading and rendering
+  repository/  pgvector queries
+  service/     retrieval, rewriting, reranking, RAG and streaming
 src/main/resources/
-  documents/   documentos fuente
-  prompts/     prompts del RAG
-src/test/java/com/albaro/rag/demo/eval/   evaluación y juez
-src/test/resources/eval/                  dataset de 30 preguntas
+  documents/   source documents
+  prompts/     RAG prompts
+src/test/java/com/albaro/rag/demo/eval/   evaluation and judge
+src/test/resources/eval/                  30-question dataset
+src/test/resources/prompts/               judge prompts
 ```
