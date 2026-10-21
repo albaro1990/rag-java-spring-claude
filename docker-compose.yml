@@ -1,0 +1,23 @@
+# PostgreSQL with pgvector for rag-demo.
+# The schema is created automatically on the first start (empty volume).
+services:
+  postgres:
+    image: pgvector/pgvector:pg18
+    container_name: rag-demo-postgres
+    environment:
+      POSTGRES_DB: rag_implmentation
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set the DB_PASSWORD environment variable}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rag_implmentation"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
