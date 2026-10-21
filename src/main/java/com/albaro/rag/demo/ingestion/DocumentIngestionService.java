@@ -34,7 +34,7 @@ public class DocumentIngestionService {
         this.documentsPath = Path.of(documentsPath);
     }
 
-    public List<DocumentChunkData> processDocuments() {
+    private List<DocumentChunkData> processDocuments() {
 
         List<DocumentChunkData> result = new ArrayList<>();
 
