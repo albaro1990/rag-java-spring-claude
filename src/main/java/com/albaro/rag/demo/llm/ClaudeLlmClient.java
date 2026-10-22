@@ -21,16 +21,11 @@ public class ClaudeLlmClient implements LlmClient {
     private final String model;
 
     public ClaudeLlmClient(
-            @Value("${anthropic.api-key}") String apiKey,
-            @Value("${anthropic.model}") String model,
-            @Value("${anthropic.timeout:30s}") Duration timeout,
-            @Value("${anthropic.max-retries:3}") int maxRetries) {
+            AnthropicClient client,
+            @Value("${anthropic.model}") String model
+            ) {
 
-        this.client = AnthropicOkHttpClient.builder()
-                .apiKey(apiKey)
-                .timeout(timeout)
-                .maxRetries(maxRetries)
-                .build();
+        this.client = client;
         this.model = model;
     }
 
