@@ -5,6 +5,7 @@ import com.albaro.rag.demo.dto.*;
 import com.albaro.rag.demo.llm.LlmClient;
 import com.albaro.rag.demo.llm.LlmResult;
 import com.albaro.rag.demo.llm.LlmUsage;
+import com.albaro.rag.demo.llm.TokenMeter;
 import com.albaro.rag.demo.prompt.PromptTemplateService;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,7 @@ public class RagService {
     private final LlmClient llmClient;
     private final RetrievalService retrievalService;
     private final PromptTemplateService promptTemplateService;
+    private final TokenMeter tokenMeter;
 
     private static final String NO_INFO =
             "No se encontró información relevante para responder la pregunta.";
@@ -27,12 +29,14 @@ public class RagService {
     public RagService(
             LlmClient  llmClient,
             RetrievalService retrievalService,
-            PromptTemplateService promptTemplateService
+            PromptTemplateService promptTemplateService,
+            TokenMeter tokenMeter
     ) {
 
         this.llmClient = llmClient;
         this.retrievalService = retrievalService;
         this.promptTemplateService = promptTemplateService;
+        this.tokenMeter = tokenMeter;
     }
 
     public RagResponse generate(String question) {
@@ -42,8 +46,12 @@ public class RagService {
         RetrievalOutcome retrieval =
                 retrievalService.retrieve(question);
 
+
+
         List<RetrievalResult> results = retrieval.results();
         LlmUsage retrievalUsage = retrieval.usage();
+
+
 
         long retrievalMs = (System.nanoTime() - retrievalStart) / 1_000_000;
 
@@ -71,9 +79,13 @@ public class RagService {
                 );
 
         long llmStart = System.nanoTime();
+        long start = System.nanoTime();
 
         LlmResult llmResult =
                 llmClient.generate(systemPrompt, userPrompt);
+
+        long latencyMs = (System.nanoTime() - start) / 1_000_000;
+        tokenMeter.record("generate", llmResult,  latencyMs);
 
 
         long llmMs = (System.nanoTime() - llmStart) / 1_000_000;

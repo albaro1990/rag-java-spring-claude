@@ -5,6 +5,7 @@ import com.albaro.rag.demo.dto.RetrievalResult;
 import com.albaro.rag.demo.llm.LlmClient;
 import com.albaro.rag.demo.llm.LlmResult;
 import com.albaro.rag.demo.llm.LlmUsage;
+import com.albaro.rag.demo.llm.TokenMeter;
 import com.albaro.rag.demo.prompt.PromptTemplateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,10 +27,12 @@ public class LlmReranker {
 
     private final LlmClient llmClient;
     private final PromptTemplateService promptTemplateService;
+    private final TokenMeter tokenMeter;
 
-    public LlmReranker(LlmClient llmClient, PromptTemplateService promptTemplateService) {
+    public LlmReranker(LlmClient llmClient, PromptTemplateService promptTemplateService, TokenMeter tokenMeter) {
         this.llmClient = llmClient;
         this.promptTemplateService = promptTemplateService;
+        this.tokenMeter = tokenMeter;
     }
 
     public RerankOutcome rerank(
@@ -49,10 +52,16 @@ public class LlmReranker {
                     .append("\n\n");
         }
 
+        long start = System.nanoTime();
+
         LlmResult result = llmClient.generate(
                 promptTemplateService.loadRerankerSystemPrompt(),
                 promptTemplateService.buildRerankerUserPrompt(question, fragments.toString())
         );
+
+        long latencyMs = (System.nanoTime() - start) / 1_000_000;
+        tokenMeter.record("rerank", result,  latencyMs);
+
         String answer = result.text().trim();
 
         List<RetrievalResult> selected = parse(answer, candidates, topN);

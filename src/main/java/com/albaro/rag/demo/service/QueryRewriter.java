@@ -2,6 +2,7 @@ package com.albaro.rag.demo.service;
 
 import com.albaro.rag.demo.llm.LlmClient;
 import com.albaro.rag.demo.llm.LlmResult;
+import com.albaro.rag.demo.llm.TokenMeter;
 import com.albaro.rag.demo.prompt.PromptTemplateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,27 +16,32 @@ public class QueryRewriter {
 
     private final LlmClient llmClient;
     private final PromptTemplateService promptTemplateService;
+    private final TokenMeter tokenMeter;
 
-    public QueryRewriter(LlmClient llmClient, PromptTemplateService promptTemplateService) {
+    public QueryRewriter(LlmClient llmClient, PromptTemplateService promptTemplateService,
+                         TokenMeter tokenMeter) {
         this.llmClient = llmClient;
         this.promptTemplateService = promptTemplateService;
+        this.tokenMeter = tokenMeter;
     }
 
     // Devuelve la pregunta reescrita (ya validada) y los tokens que costó.
     public LlmResult rewrite(String question) {
 
+        long start = System.nanoTime();
         LlmResult result = llmClient.generate(
                 promptTemplateService.loadRewriterSystemPrompt(),
                 question
         );
 
+        long latencyMs = (System.nanoTime() - start) / 1_000_000;
+        tokenMeter.record("rewrite", result,  latencyMs);
+
         String rewritten = sanitize(result.text(), question);
 
-        log.debug("Pregunta reescrita: '{}' -> '{}'", question, rewritten);
-        log.info("Query rewriting: tokens {} + {}",
-                result.inputTokens(), result.outputTokens());
+        log.debug("Pregunta reescrita: '{}' -> '{}'", question, rewritten);;
 
-        return new LlmResult(rewritten, result.inputTokens(), result.outputTokens());
+        return new LlmResult(rewritten, result.inputTokens(), result.outputTokens(), result.model());
     }
 
     // Validación de la salida: el LLM no siempre respeta "una sola línea".

@@ -55,7 +55,8 @@ public class ClaudeLlmClient implements LlmClient {
         return new LlmResult(
                 text,
                 response.usage().inputTokens(),
-                response.usage().outputTokens()
+                response.usage().outputTokens(),
+                model
         );
     }
 

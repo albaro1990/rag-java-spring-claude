@@ -5,6 +5,7 @@ package com.albaro.rag.demo.llm;
 public record LlmResult(
         String text,
         long inputTokens,
-        long outputTokens
+        long outputTokens,
+        String model
 ) {
 }

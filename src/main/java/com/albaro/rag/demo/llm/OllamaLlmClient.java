@@ -5,6 +5,7 @@ import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.output.TokenUsage;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -13,9 +14,11 @@ import org.springframework.stereotype.Component;
 public class OllamaLlmClient implements LlmClient {
 
     private final ChatModel chatModel;
+    private final String model;
 
-    public OllamaLlmClient(ChatModel chatModel) {
+    public OllamaLlmClient(ChatModel chatModel, @Value("${ollama.model}") String model) {
         this.chatModel = chatModel;
+        this.model = model;
     }
 
     @Override
@@ -32,7 +35,8 @@ public class OllamaLlmClient implements LlmClient {
         return new LlmResult(
                 response.aiMessage().text(),
                 usage != null && usage.inputTokenCount() != null ? usage.inputTokenCount() : 0,
-                usage != null && usage.outputTokenCount() != null ? usage.outputTokenCount() : 0
+                usage != null && usage.outputTokenCount() != null ? usage.outputTokenCount() : 0,
+                model
         );
     }
 }
