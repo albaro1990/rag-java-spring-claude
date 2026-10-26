@@ -39,6 +39,14 @@ public class TokenMeter {
                 .increment(result.outputTokens());
 
 
+        Counter.builder("llm.cost.usd")
+                .tag("operation", operation)
+                .tag("model", result.model())
+                .register(meterRegistry)
+                .increment(cost);
+
+
+
         Timer.builder("llm.latency")
                 .tag("operation", operation)
                 .register(meterRegistry)

@@ -66,9 +66,8 @@ public class LlmReranker {
 
         List<RetrievalResult> selected = parse(answer, candidates, topN);
 
-        log.info("Reranker: {} candidatos -> {} seleccionados (tokens {} + {})",
-                candidates.size(), selected.size(),
-                result.inputTokens(), result.outputTokens());
+        log.info("Reranker: {} candidatos -> {} seleccionados",
+                candidates.size(), selected.size());
         log.debug("Reranker respondió: {}", answer);
 
         return new RerankOutcome(selected, LlmUsage.of(result));
