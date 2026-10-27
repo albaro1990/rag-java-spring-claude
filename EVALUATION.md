@@ -69,7 +69,7 @@ With the full pipeline, 66% of input tokens come from rewriting and reranking. W
 | Overlap 0 | Overlap 100 filled the top 8 with repeated text and did not improve retrieval (7/10 both ways); generation was better with 0. The code still supports overlap. |
 | Idempotent ingestion | Re-ingesting duplicated chunks; now each document is replaced as a whole in one transaction, and documents removed from the folder are deleted. |
 | Abstention detected by exact match | With `contains`, a partial answer that included the "no information" sentence was counted as an abstention. |
-| Rule 9: plain text, no markdown | Answers with markdown dropped from 8 to 0, at the cost of +35% output tokens. |
+| Rule 8: plain text, no markdown | Answers with markdown dropped from 8 to 0, at the cost of +35% output tokens. |
 | Haiku 5.5 as generator and judge | Same faithfulness as larger models on this dataset, the fastest, and about 18 times cheaper than Sonnet. The self-preference bias of judging its own answers was accepted for budget reasons. |
 | Query rewriting + reranker | Fixed vocabulary mismatches (Q15 "no me aprueban" vs "rechazada", Q28), and the reranker removed noise on unanswerable questions by answering `NINGUNO`. |
 | Revert the reranker's "partial information" rule | It fixed Q19 but broke Q09: it accepted a vague fragment and opened the door to hallucination. In banking, missing a partial answer is better than answering wrongly. |
@@ -118,3 +118,42 @@ With the full pipeline, 66% of input tokens come from rewriting and reranking. W
 - Observability: Micrometer metrics (time to first token, duration, tokens, cost), structured JSON logs with a correlation id (MDC), and no personal data at INFO level.
 - Circuit breaker and fallback to another provider if the API fails persistently.
 - Run the evaluation in CI as a regression test before every prompt or model change.
+
+## Experimento: rag-system v2 (contexto + porqué)
+
+**Hipótesis:** añadir contexto explícito del asistente bancario y justificar la prioridad de la evidencia reducirá respuestas no fundamentadas sin aumentar las abstenciones innecesarias.
+
+**Variable modificada:** únicamente el contenido de `rag-system.txt`: se añade el bloque `CONTEXTO` y el bloque `PORQUÉ`. Se mantienen iguales el modelo Haiku 5.5, parámetros, preguntas, documentos, recuperación, reescritura, reranking y demás configuración. Se compara contra la versión actual del prompt.
+
+**Protocolo:** ejecutar versión actual y v2 tres veces cada una. Registrar los resultados por corrida, no solo el total agregado. Usar Q01–Q20 para ajuste y Q21–Q30 como conjunto de confirmación; no inspeccionar Q21–Q30 para modificar el prompt. Comparar ambas versiones sobre los mismos casos y condiciones.
+
+**Acepto el cambio si, en 3 corridas:**
+
+- En las 30 evaluaciones de confirmación de la versión v2 (10 preguntas × 3 corridas), hay **0 alucinaciones críticas**: ninguna afirmación inventada sobre tarifas, requisitos, plazos, aprobaciones o procedimientos bancarios.
+- Cada corrida de confirmación obtiene al menos **9/10 decisiones correctas** (responder cuando hay evidencia suficiente y abstenerse cuando no la hay), y el promedio de v2 no queda por debajo del promedio de la versión actual.
+- La tasa de abstenciones innecesarias en preguntas respondibles no aumenta frente a la versión actual; cualquier cambio de clasificación se revisa contra la evidencia esperada de cada pregunta.
+- Las puntuaciones medias de `faithfulness`, `completeness` y `relevance` del juez no empeoran más de **0.2 puntos sobre 5** respecto de la versión actual; toda posible alucinación señalada por el juez se revisa manualmente.
+- El coste medio total por pregunta, incluyendo reescritura, reranking y generación, no aumenta más de **15 %**, y la latencia media total no aumenta más de **20 %**, salvo que exista una mejora de calidad clara y documentada que justifique la diferencia.
+- Se guardan por separado el prompt/versionado, resultados por pregunta, respuestas, decisiones de abstención, puntuaciones del juez, tokens, coste y latencia para que el experimento sea reproducible.
+
+**Rechazo el cambio si** aparece una alucinación crítica nueva, empeoran las decisiones de responder/abstenerse en confirmación, o se incumplen los límites de coste/latencia sin una mejora de calidad suficiente.
+
+**Resultado inconcluso si** las diferencias son pequeñas o inconsistentes entre corridas. En ese caso no se acepta todavía el cambio: se revisan los casos discordantes y se amplía el conjunto de evaluación, sin reutilizar las preguntas de confirmación para ajustar el prompt.
+
+**Nota:** el conjunto de confirmación tiene solo 10 preguntas distintas; tres corridas ayudan a observar variabilidad, pero no equivalen a 30 casos independientes ni demuestran por sí solas una mejora estadística generalizable.
+
+### Resultados (26-oct-2026, Haiku 5.5, 3 corridas por versión)
+
+| Medida | v1 (actual) | v2 (contexto + porqué) |
+| --- | --- | --- |
+| Decisiones correctas (30 preguntas) | 29, 29, 29 | 30, 29, 29 |
+| Alucinaciones (respondió sin evidencia) | 0 | 0 |
+| Abstenciones de más | 3 (Q19 en las 3) | 2 (Q19 en 2 de 3) |
+| Confirmación Q21–Q30 | 10/10 en las 3 | 10/10 en las 3 |
+| Juez: fidelidad / completitud / relevancia | 5.00 / 4.85 / 4.62 | 5.00 / 4.95 / 4.60 |
+| Tokens por corrida (entrada / salida) | 103,235 / 17,618 | 108,081 / 19,769 |
+| Costo por pregunta | US$0.00064 | US$0.00069 (+8%) |
+| Latencia total media | 5.6 s | 5.9 s (+5%) |
+
+**Decision:**
+- Se mantiene v1. v2 es no inferior pero no mejora, y cuesta un 8% más; se conserva como candidata documentada.”
