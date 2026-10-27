@@ -155,5 +155,19 @@ With the full pipeline, 66% of input tokens come from rewriting and reranking. W
 | Costo por pregunta | US$0.00064 | US$0.00069 (+8%) |
 | Latencia total media | 5.6 s | 5.9 s (+5%) |
 
-**Decision:**
-- Se mantiene v1. v2 es no inferior pero no mejora, y cuesta un 8% más; se conserva como candidata documentada.”
+**Decisión:** se mantiene v1. v2 es no inferior pero no mejora, y cuesta un 8 % más; se conserva como candidata documentada.
+
+**Veredicto contra los criterios:**
+- ✅ 0 alucinaciones en confirmación; ✅ confirmación 10/10 en las 3 corridas; ✅ abstenciones de más: no aumentan (3 → 2);
+- ✅ juez: ningún promedio empeora más de 0.2; ✅ costo +8 % (< 15 %); ✅ latencia +5 % (< 20 %).
+- Conflicto: v2 cumple todos los criterios de aceptación, pero la única diferencia (Q19 en 1 de 3 corridas) es pequeña e inconsistente, lo que activa la regla de "inconcluso". Se resolvió así: v2 no demuestra mejora, y el costo extra no se justifica.
+
+**Lecciones:**
+1. Efecto techo: v1 ya tenía 0 alucinaciones, así que la hipótesis de reducirlas no era comprobable.
+2. Los tokens de salida subieron un 12 % (17,618 → 19,769): v2 responde más largo.
+3. Q19 depende de la corrida.
+4. Definir antes si se prueba "no empeora" o "mejora".
+
+**Limitaciones:** solo 10 preguntas de confirmación; el juez es el mismo modelo que el generador; un solo modelo.
+
+**Reproducibilidad:** Haiku 5.5, `rag.llm.provider=claude`, `rag-system-v1.txt` y `rag-system-v2.txt`, `rag-user.txt` con numeración corregida (1–8) en ambas versiones.
