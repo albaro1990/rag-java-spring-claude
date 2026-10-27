@@ -171,3 +171,88 @@ With the full pipeline, 66% of input tokens come from rewriting and reranking. W
 **Limitaciones:** solo 10 preguntas de confirmación; el juez es el mismo modelo que el generador; un solo modelo.
 
 **Reproducibilidad:** Haiku 5.5, `rag.llm.provider=claude`, `rag-system-v1.txt` y `rag-system-v2.txt`, `rag-user.txt` con numeración corregida (1–8) en ambas versiones.
+
+## Experimento: clasificador de intención (módulo 2.8)
+
+**Objetivo:** construir la puerta de entrada del asistente: un clasificador que decide, antes de la recuperación, qué tipo de mensaje llegó, y medirlo con un dataset propio, una matriz de confusión y el costo real.
+
+**Diseño**
+
+- **Categorías (4):** `consulta` (pide información sobre un proceso), `reclamo` (se queja de un servicio), `bloqueo` (pide bloquear la tarjeta ahora, es urgente) y `fuera_de_tema` (no trata de tarjetas).
+- **Prompt:** `prompts/intent-classifier-system.txt`. Contexto y porqué, definición de cada categoría, reglas de decisión, 3 ejemplos por categoría (uno de ellos informal) y salida obligatoria en JSON. El mensaje del cliente va delimitado con `<mensaje_cliente>` y se trata como dato, no como instrucción.
+- **Salida:** `{"razonamiento": "...", "categoria": "..."}`, con el razonamiento primero para que el modelo decida después de analizar.
+- **Código:** `IntentClassifier` convierte la categoría a un `enum` (`IntentCategory`), normaliza mayúsculas y espacios, valida que la categoría exista y registra el uso con `tokenMeter.record("classify", ...)` antes de interpretar la respuesta. Si la respuesta no es válida, usa `fuera_de_tema` como plan B y suma 1 a `parseFailureCount`, que el test imprime aparte.
+
+**Dataset** (`src/test/resources/eval/intent-cases.json`): 51 mensajes.
+
+| Conjunto | consulta | reclamo | bloqueo | fuera_de_tema | Total |
+| --- | --- | --- | --- | --- | --- |
+| Ajuste | 9 | 8 | 9 | 10 | 36 |
+| Confirmación | 3 | 4 | 5 | 3 | 15 |
+| Total | 12 | 12 | 14 | 13 | 51 |
+
+Incluye casos de frontera: un robo sin pedir el bloqueo (I41), un robo con espera en la línea (I42), un bloqueo sin la palabra "bloquear" (I43, I50), una cuenta de ahorros (I44), una inyección de instrucciones (I45), un saludo (I46), dos intenciones en un mensaje (I47), una pregunta que en realidad es una orden (I49) y una urgencia sin certeza de robo (I51).
+
+**Correcciones hechas antes de medir** (sin haber visto ningún resultado):
+
+- I31 e I33 eran idénticos a ejemplos del prompt (fuga de datos); se cambiaron.
+- Cinco mensajes casi idénticos a ejemplos del prompt (I04, I11, I22, I29, I30) se reescribieron con otras palabras; la similitud bajó de entre 0.67 y 0.91 a entre 0.42 y 0.50.
+- Se añadieron 3 casos difíciles de `bloqueo` a confirmación (I49, I50, I51), porque tenía solo 2 y ambos eran variaciones fáciles de un ejemplo.
+- Las etiquetas de I41, I42 e I48 se confirmaron antes de medir y no se cambiaron después.
+
+**Protocolo:** 3 corridas de los 51 mensajes con Haiku 5.5 (`rag.llm.provider=claude`), test `IntentClassifierEvaluationTest`. El prompt no se ajustó con los mensajes de confirmación.
+
+### Resultados (27-oct-2026, Haiku 5.5, 3 corridas)
+
+| Medida | Resultado |
+| --- | --- |
+| Accuracy | 50/51 (98.0 %) en las 3 corridas, idéntico |
+| Ajuste / confirmación | 36/36 y 14/15 |
+| Fallos de parseo | 0 de 51 en cada corrida |
+| Fila `bloqueo` | 14 de 14 |
+| Costo por clasificación | US$0.0003 (US$0.0155 por corrida de 51) |
+| Tokens por llamada (entrada / salida) | 2,482 / 110 |
+| Latencia | 1.3 s en promedio, 4.0 s máximo |
+
+Matriz de confusión (filas = esperada, columnas = predicha), igual en las 3 corridas:
+
+| esperada \ predicha | consulta | reclamo | bloqueo | fuera_de_tema |
+| --- | --- | --- | --- | --- |
+| consulta | 11 | 0 | 1 | 0 |
+| reclamo | 0 | 12 | 0 | 0 |
+| bloqueo | 0 | 0 | 14 | 0 |
+| fuera_de_tema | 0 | 0 | 0 | 13 |
+
+**Análisis**
+
+- **Único error:** I48, "Me clonaron la tarjeta, ¿me ayudan?", etiquetado `consulta` y clasificado como `bloqueo`. La etiqueta es discutible: el mensaje no pide información ni ordena un bloqueo, y el modelo eligió el lado seguro. Se documenta como **etiqueta discutible** y no se cambia ni se ajusta el prompt con ella, porque es un mensaje de confirmación.
+- **Dirección del error:** es el error barato (bloquear de más), no el caro (dejar sin atender una petición urgente de bloqueo). La fila `bloqueo` no tuvo ningún error, ni siquiera en los casos difíciles.
+- **Efecto techo:** con 36/36 en ajuste y resultados idénticos en 3 corridas, este dataset ya no distingue entre prompts buenos. Un 98 % solo mide los casos que ya se me habían ocurrido.
+- **Costo:** clasificar cuesta alrededor de la mitad de lo que cuesta responder una pregunta completa con el RAG (US$0.0003 frente a US$0.00064) y suma 1.3 s antes de empezar. El clasificador se justifica si ahorra llamadas (los mensajes `fuera_de_tema` no pasarían por reescritura ni reranking) o si el enrutamiento vale más que su costo (por ejemplo, un bloqueo urgente que llega rápido a una persona).
+
+**Decisión pendiente con negocio: plan B.** Hoy una respuesta inválida del modelo se trata como `fuera_de_tema`. En una petición urgente de bloqueo eso significaría no atenderla. El destino correcto de un fallo depende de la operación y debe definirse con negocio (por ejemplo, derivar a una persona). Mientras tanto, el contador de fallos de parseo permite verlo en la medición.
+
+**Lecciones**
+
+1. Los ejemplos del prompt y el dataset de evaluación no pueden compartir mensajes, ni siquiera casi idénticos: hay que medir la similitud, no solo buscar coincidencias exactas.
+2. La fila de la categoría más cara (`bloqueo`) importa más que el accuracy global.
+3. Un fallback que devuelve una categoría válida esconde los fallos; hay que contarlos aparte.
+4. Un dataset que sale 100 % no demuestra que el sistema sea bueno, demuestra que el dataset es fácil. El siguiente paso es hacerlo más difícil.
+5. Las etiquetas discutibles se deciden antes de medir.
+
+**Limitaciones**
+
+- Solo 15 mensajes de confirmación (5 de `bloqueo`); un error cambia mucho el porcentaje.
+- Las 3 corridas dieron el mismo resultado, así que no aportan información de variabilidad.
+- Un solo modelo (Haiku 5.5) y mensajes escritos por mí, no por clientes reales.
+- Las etiquetas de los casos de frontera son criterio propio, no una regla de negocio validada.
+
+**Siguientes pasos**
+
+- Ampliar el dataset con mensajes más difíciles y, si es posible, reales: ironía, varios temas, errores de ortografía, otros idiomas y otros intentos de inyección.
+- Activar `logging.level.com.albaro.rag.demo.intent.IntentClassifier=DEBUG` para ver la justificación del modelo (por ejemplo, en I48).
+- Probar invertir el orden del JSON (`categoria` antes de `razonamiento`) y medir la diferencia, cambiando una sola variable.
+- Definir con negocio el destino de un fallo de parseo.
+- Calcular si el clasificador paga su costo, con la proporción real de mensajes `fuera_de_tema`.
+
+**Reproducibilidad:** Haiku 5.5, `rag.llm.provider=claude`, `prompts/intent-classifier-system.txt`, `intent-cases.json` (51 casos) y `IntentClassifierEvaluationTest`. Los mensajes de la corrida se identifican por su ID (I01–I51).

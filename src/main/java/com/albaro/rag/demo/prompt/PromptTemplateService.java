@@ -41,6 +41,11 @@ public class PromptTemplateService {
         );
     }
 
+    public String loadIntentClassifierSystemPrompt() {
+        return loadPrompt(promptProperties.getIntentClassifierPath());
+    }
+
+
     public String loadRewriterSystemPrompt() {
         return loadPrompt(promptProperties.getRewriterSystemPath());
     }

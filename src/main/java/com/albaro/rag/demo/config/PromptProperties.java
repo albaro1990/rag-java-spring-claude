@@ -14,4 +14,5 @@ public class PromptProperties {
     private String rewriterSystemPath;
     private String rerankerSystemPath;
     private String rerankerUserPath;
+    private String intentClassifierPath;
 }
