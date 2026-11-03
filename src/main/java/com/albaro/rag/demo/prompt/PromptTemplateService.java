@@ -90,4 +90,8 @@ public class PromptTemplateService {
             );
         }
     }
+
+    public String loadSummarizerSystemPrompt() {
+        return loadPrompt(promptProperties.getSummarizerSystemPath());
+    }
 }

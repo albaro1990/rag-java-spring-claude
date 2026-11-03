@@ -1,0 +1,144 @@
+{
+  "info": {
+    "name": "RAG Chat - demo paso a paso",
+    "description": "Conversación de varios turnos contra POST /api/chat. Envía las peticiones EN ORDEN con el mismo sessionId y mira la pregunta condensada y la respuesta de cada una. Después revisa la tabla chat_messages en pgAdmin.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "sessionId", "value": "postman-demo-1" }
+  ],
+  "item": [
+    {
+      "name": "1. Primer turno - ¿Qué hago si pierdo mi tarjeta?",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "console.log('Condensada:', r.condensedQuestion);",
+              "console.log('Respuesta :', r.ragResponse.answer);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"message\": \"¿Qué hago si pierdo mi tarjeta?\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/chat", "host": ["{{baseUrl}}"], "path": ["api", "chat"] }
+      }
+    },
+    {
+      "name": "2. Dependiente - ¿y por qué canales puedo hacerlo?",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "console.log('Condensada:', r.condensedQuestion);",
+              "console.log('Respuesta :', r.ragResponse.answer);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"message\": \"¿y por qué canales puedo hacerlo?\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/chat", "host": ["{{baseUrl}}"], "path": ["api", "chat"] }
+      }
+    },
+    {
+      "name": "3. Dependiente - ¿y después puedo pedir otra tarjeta?",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "console.log('Condensada:', r.condensedQuestion);",
+              "console.log('Respuesta :', r.ragResponse.answer);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"message\": \"¿y después puedo pedir otra tarjeta?\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/chat", "host": ["{{baseUrl}}"], "path": ["api", "chat"] }
+      }
+    },
+    {
+      "name": "4. Cambio de tema - Ahora quiero sacar una tarjeta nueva",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "console.log('Condensada:', r.condensedQuestion);",
+              "console.log('Respuesta :', r.ragResponse.answer);",
+              "pm.test('No arrastra el bloqueo', () => pm.expect(r.condensedQuestion.toLowerCase()).to.not.include('bloque'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"message\": \"Ahora quiero sacar una tarjeta nueva, ¿qué necesito?\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/chat", "host": ["{{baseUrl}}"], "path": ["api", "chat"] }
+      }
+    },
+    {
+      "name": "5. Dependiente sin dato en los documentos - ¿y cuánto tarda?",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "console.log('Condensada:', r.condensedQuestion);",
+              "console.log('Respuesta :', r.ragResponse.answer);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"message\": \"¿y cuánto tarda?\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/chat", "host": ["{{baseUrl}}"], "path": ["api", "chat"] }
+      }
+    }
+  ]
+}
